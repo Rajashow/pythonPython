@@ -42,7 +42,7 @@ class VirtualMachine:
         lambda x, y: x is not y,
         lambda x, y: issubclass(x, Exception) and issubclass(x, y),
     )
-
+    # core ops
     def byte_LOAD_CONST(self, const):
         self.push(const)
 
@@ -58,7 +58,7 @@ class VirtualMachine:
         elif name in frame.f_builtins:
             val = frame.f_builtins[name]
         else:
-            raise NameError("name '%s' is not defined" % name)
+            raise NameError(f"name: '{name}' is not defined")
         self.push(val)
 
     def byte_STORE_NAME(self, name):
@@ -69,7 +69,7 @@ class VirtualMachine:
             val = self.frame.f_locals[name]
         else:
             raise UnboundLocalError(
-                "local variable '%s' referenced before assignment" % name
+                f"local variable: '{name}' referenced before assignment"
             )
         self.push(val)
 
@@ -83,7 +83,7 @@ class VirtualMachine:
         elif name in f.f_builtins:
             val = f.f_builtins[name]
         else:
-            raise NameError("global name '%s' is not defined" % name)
+            raise NameError(f"global name: '{name}' is not defined")
         self.push(val)
 
     def unaryOperator(self, op):
@@ -182,6 +182,7 @@ class VirtualMachine:
         self.return_value = self.pop()
         return "return"
 
+    # core stacks manipulation
     def jump(self, jump):
         self.frame.f_lasti = jump
 
@@ -320,14 +321,16 @@ class VirtualMachine:
         return byte_name, argument
 
     def dispatch(self, byte_name, argument):
+        UNARY_ = "UNARY_"
+        BINARY_ = "BINARY_"
         why = None
         try:
             bytecode_fn = getattr(self, f"byte_{byte_name}", None)
             if bytecode_fn is None:
-                if byte_name.startswith("UNARY_"):
-                    self.unaryOperator(byte_name[6:])
-                elif byte_name.startswith("BINARY_"):
-                    self.binaryOperator(byte_name[7:])
+                if byte_name.startswith(UNARY_):
+                    self.unaryOperator(byte_name[len(UNARY_) :])
+                elif byte_name.startswith(BINARY_):
+                    self.binaryOperator(byte_name[len(BINARY_) :])
                 else:
                     raise ValueError(
                         f"Virtual Machine Error: unsupported bytecode type:{byte_name}"
